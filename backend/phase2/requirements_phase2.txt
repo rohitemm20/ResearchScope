@@ -1,0 +1,10 @@
+# add to backend/requirements.txt
+numpy
+spacy>=3.7
+sentence-transformers>=2.7
+faiss-cpu>=1.8
+transformers>=4.40
+torch
+keybert>=0.8
+sentencepiece
+# then run once:  python -m spacy download en_core_web_sm
