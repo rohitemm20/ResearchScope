@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from .pipeline import run_pipeline, semantic_search
 from .text_cleaning import load_parsed_json
 from .relevance import check_relevance, clean_interests
+from .domain_taxonomy import generate_domain_taxonomy
 
 
 router = APIRouter(prefix="/phase2", tags=["phase2"])
@@ -167,4 +168,66 @@ def relevance(
         raise HTTPException(
             422,
             str(exc)
+        ) from exc
+
+@router.post("/domain-taxonomy/{job_id}")
+def domain_taxonomy(job_id: str):
+    """
+    Generate a dynamic research domain taxonomy
+    for an already-uploaded and parsed paper.
+    """
+
+    _check(job_id)
+
+    text_path = os.path.join(
+        OUTPUT_DIR,
+        f"{job_id}.txt"
+    )
+
+    if not os.path.exists(text_path):
+        raise HTTPException(
+            status_code=404,
+            detail="Extracted paper text not found. Upload the PDF first."
+        )
+
+    try:
+        with open(text_path, "r", encoding="utf-8") as f:
+            paper_text = f.read()
+
+        taxonomy = generate_domain_taxonomy(paper_text)
+
+        taxonomy_path = os.path.join(
+            OUTPUT_DIR,
+            f"{job_id}_domain_taxonomy.json"
+        )
+
+        with open(taxonomy_path, "w", encoding="utf-8") as f:
+            json.dump(
+                taxonomy,
+                f,
+                indent=2,
+                ensure_ascii=False
+            )
+
+        return {
+            "job_id": job_id,
+            "domain_taxonomy": taxonomy
+        }
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail=str(exc)
+        ) from exc
+
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=str(exc)
+        ) from exc
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Domain taxonomy generation failed: {exc}"
         ) from exc

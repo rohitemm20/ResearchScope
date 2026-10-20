@@ -1,5 +1,14 @@
+
 __pycache__/
 *.pyc
 uploads/*.pdf
 output/*.json
 output/*.txt
+
+# Environment variables and API keys
+.env
+.env.*
+!.env.example
+
+# Python virtual environment
+venv/
