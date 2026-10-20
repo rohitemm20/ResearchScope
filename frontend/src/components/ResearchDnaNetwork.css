@@ -1,0 +1,22 @@
+/* Import this stylesheet from App.jsx after App.css. */
+.dna-panel { max-width: 100%; }
+.dna-zoom { display: flex; flex-wrap: wrap; gap: 6px; }
+.dna-canvas { width: 100%; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: #fffefa; touch-action: none; cursor: grab; }
+.dna-canvas:active { cursor: grabbing; }
+.dna-canvas svg { display: block; width: 100%; min-width: 560px; height: auto; }
+.dna-edge { cursor: pointer; }
+.dna-edge line { stroke: #9eaa94; opacity: .82; }
+.dna-edge:hover line, .dna-edge:focus line { stroke: var(--red); opacity: 1; }
+.dna-node { cursor: pointer; }
+.dna-node circle { fill: #e3ecdd; stroke: #56744a; stroke-width: 1.5; transition: fill .15s, stroke-width .15s; }
+.dna-node text { font: 600 11px system-ui, sans-serif; fill: #2b3a2a; pointer-events: none; }
+.dna-node .dna-percent { font-size: 10px; font-weight: 800; }
+.dna-node:hover circle, .dna-node.selected circle, .dna-node:focus circle { fill: #f6d3da; stroke: #cf3a38; stroke-width: 3; }
+.dna-detail { margin-top: 18px; border-top: 1px dashed var(--line); padding-top: 16px; }
+.dna-detail h3 { margin: 0; }
+.dna-evidence blockquote { margin: 10px 0; padding: 10px 14px; border-left: 3px solid var(--moss); background: #fbf6ee; }
+.dna-evidence blockquote p { margin: 0 0 6px; }
+.dna-evidence small { color: var(--muted); }
+.dna-method { margin-top: 14px; }
+.dna-method summary { cursor: pointer; font-weight: 700; color: var(--moss-d); }
+@media (max-width: 520px) { .dna-panel .row { align-items: flex-start; flex-direction: column; } .dna-canvas svg { min-width: 650px; } }

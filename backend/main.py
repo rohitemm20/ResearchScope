@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pdf_parser import parse_pdf
 from phase2.routes import router as phase2_router
+from phase2.topic_routes import router as topic_network_router
 
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -22,8 +23,11 @@ MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
 app = FastAPI(title="ResearchScope - Phase 1 PDF Parser")
 
 
-# Register Phase 2 routes
+# Register existing Phase 2 routes
 app.include_router(phase2_router)
+
+# Register Research DNA topic-network routes
+app.include_router(topic_network_router)
 
 
 # Allow the local Vite dev server to call this API from the browser.
@@ -54,7 +58,7 @@ async def upload_pdf(file: UploadFile = File(...)):
             detail="Only PDF files are accepted (content-type must be application/pdf).",
         )
 
-    if not file.filename.lower().endswith(".pdf"):
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(
             status_code=400,
             detail="File must have a .pdf extension.",
