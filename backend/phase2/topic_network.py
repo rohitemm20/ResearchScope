@@ -43,8 +43,69 @@ def _stable_id(prefix: str, value: str) -> str:
 def _normal(text: str) -> str:
     return re.sub(r"\s+", " ", text.lower()).strip()
 
+_LEADING_NOISE = {
+    "the", "a", "an", "new", "novel", "proposed", "previously", "recent",
+    "various", "several", "different", "following", "using", "based",
+    "results", "result", "approach", "method", "methods", "system", "systems",
+}
+_GENERIC_ONLY = {
+    "paper", "study", "work", "result", "results", "approach", "method",
+    "methods", "system", "systems", "model", "models", "technique", "techniques",
+    "process", "processes", "thing", "things", "value", "values",
+}
+_ACRONYMS = {
+    "ai": "AI", "ml": "ML", "iot": "IoT", "tls": "TLS", "tlsh": "TLSH",
+    "api": "API", "apis": "APIs", "cnn": "CNN", "cnns": "CNNs",
+    "rnn": "RNN", "rnns": "RNNs", "svm": "SVM", "svms": "SVMs",
+    "nlp": "NLP", "llm": "LLM", "llms": "LLMs", "gpu": "GPU", "cpu": "CPU",
+    "tcp": "TCP", "ip": "IP", "http": "HTTP", "https": "HTTPS",
+    "dns": "DNS", "dos": "DoS", "ddos": "DDoS",
+}
+
+def _clean_candidate(phrase: str) -> str | None:
+    """Normalize a candidate phrase and reject fragments/generic-only labels."""
+    phrase = phrase.replace("’", "'")
+    phrase = re.sub(r"\b(?:'s|’s)\b", "", phrase, flags=re.I)
+    phrase = re.sub(r"^[^A-Za-z0-9]+|[^A-Za-z0-9]+$", "", phrase)
+    phrase = re.sub(r"\s+", " ", phrase).strip()
+    words = re.findall(r"[A-Za-z][A-Za-z0-9.+_-]*", phrase)
+    if not words or len(words) > 5:
+        return None
+
+    while words and words[0].lower() in _LEADING_NOISE:
+        words.pop(0)
+    while len(words) > 1 and words[-1].lower() in {"paper", "study", "work", "approach"}:
+        words.pop()
+    if not words:
+        return None
+
+    lowered = [w.lower() for w in words]
+    if len(lowered) == 1 and (lowered[0] in _GENERIC_ONLY or len(lowered[0]) < 3):
+        return None
+    if all(w in _GENERIC_ONLY for w in lowered):
+        return None
+    if len(lowered) > 1 and lowered[0] in {"and", "or", "but", "with", "from", "for", "of", "to"}:
+        return None
+
+    normalized = " ".join(lowered)
+    # Reject sentence-like phrases and common extraction debris.
+    if re.search(r"\b(?:is|are|was|were|has|have|had|can|could|would|should|will|may|might)\b", normalized):
+        return None
+    if len(normalized) < 3:
+        return None
+    return normalized
+
+def _display_label(term: str) -> str:
+    """Human-readable label; keep common technical acronyms recognizable."""
+    words = term.split()
+    shown = []
+    for word in words:
+        key = word.lower().strip(".,:;()[]{}")
+        shown.append(_ACRONYMS.get(key, word.capitalize()))
+    return " ".join(shown)
+
 def _topic_candidates(sentences: list[dict[str, Any]]) -> list[str]:
-    """Extract noun chunks/entities with spaCy when available; safe fallback."""
+    """Generate cleaned noun-phrase/entity candidates; fallback only proposes candidates."""
     candidates: dict[str, int] = defaultdict(int)
     try:
         import spacy
@@ -61,36 +122,41 @@ def _topic_candidates(sentences: list[dict[str, Any]]) -> list[str]:
                 spans.extend(doc.noun_chunks)
             spans.extend(ent for ent in doc.ents)
             for span in spans:
-                phrase = re.sub(r"^[^A-Za-z0-9]+|[^A-Za-z0-9]+$", "", span.text)
-                phrase = re.sub(r"\s+", " ", phrase).strip()
-                if 2 <= len(phrase) <= 70 and len(phrase.split()) <= 6:
-                    key = _normal(phrase)
-                    if len(key) > 2:
-                        candidates[key] += 1
+                cleaned = _clean_candidate(span.text)
+                if cleaned:
+                    candidates[cleaned] += 1
     except Exception:
+        # The lexical fallback below is used if spaCy or its model is unavailable.
         pass
 
-    # Candidate fallback is only lexical candidate generation. Embeddings and
-    # passage-level support decide which candidates become topics.
     if not candidates:
         stop = set("""the a an and or but for with from into over under using use based
         this that these those their its our we they is are was were be been being
         to of in on as by at it can may might will would should have has had""".split())
         for item in sentences:
-            words = re.findall(r"\b[A-Za-z][A-Za-z0-9-]{2,}\b", item["text"])
+            words = re.findall(r"\b[A-Za-z][A-Za-z0-9.+_-]{2,}\b", item["text"])
             for word in words:
                 if word.lower() not in stop:
-                    candidates[word.lower()] += 1
+                    cleaned = _clean_candidate(word)
+                    if cleaned:
+                        candidates[cleaned] += 1
+            # Only use adjacent noun-like tokens as fallback candidates, and
+            # clean them with the same rules to prevent sentence fragments.
             for a, b in zip(words, words[1:]):
                 if a.lower() not in stop and b.lower() not in stop:
-                    candidates[(a + " " + b).lower()] += 1
-    ranked = sorted(candidates, key=lambda k: (-candidates[k], k))
-    # Avoid near-duplicate phrases by removing a shorter candidate if it is
-    # wholly contained in a better-supported longer candidate.
-    kept = []
+                    cleaned = _clean_candidate(f"{a} {b}")
+                    if cleaned:
+                        candidates[cleaned] += 1
+
+    ranked = sorted(candidates, key=lambda term: (-candidates[term], term))
+    kept: list[str] = []
     for term in ranked:
-        if any(term != other and term in other and candidates[other] >= candidates[term]
-               for other in kept):
+        if any(
+            term != other
+            and re.search(r"(?<!\w)" + re.escape(term) + r"(?!\w)", other)
+            and candidates[other] >= candidates[term]
+            for other in kept
+        ):
             continue
         kept.append(term)
     return kept[:100]
@@ -193,7 +259,7 @@ def build_topic_network(parsed: dict[str, Any], max_topics: int = MAX_TOPICS) ->
         topic_passages[term] = [sentences[i] for i, _ in rows]
         nodes.append({
             "id": _stable_id("topic", term),
-            "label": term,
+            "label": _display_label(term),
             "percentage": rounded[term],
             "passage_support": len(rows),
             "description": f"Supported by {len(rows)} semantically assigned source passage(s).",
@@ -229,7 +295,7 @@ def build_topic_network(parsed: dict[str, Any], max_topics: int = MAX_TOPICS) ->
                     "cue": cue_rx.search(sent["text"]).group(0),
                 })
 
-    node_by_term = {n["label"]: n for n in nodes}
+    node_by_term = {term: node for term, node in zip(viable, nodes)}
     edges = []
     for (a, b, rel), rec in sorted(edges_by_key.items()):
         # Edge strength is an independently calculated structural diagnostic:
