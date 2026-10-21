@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import ResearchDnaNetwork from "./components/ResearchDnaNetwork";
 import "./components/ResearchDnaNetwork.css";
+import ResearchGaps from "./components/ResearchGaps";
 
 const API_BASE = "http://127.0.0.1:8000";
 const STEPS = ["Upload", "Read the paper", "Summarise"];
@@ -713,6 +714,9 @@ export default function App() {
 
             {/* Research DNA topic network */}
             <ResearchDnaNetwork jobId={parsed?.job_id} />
+
+            {/* Research Gap Identification */}
+            <ResearchGaps jobId={parsed?.job_id} />
 
             {/* Summary */}
 

@@ -16,6 +16,7 @@ from .pipeline import run_pipeline, semantic_search
 from .text_cleaning import load_parsed_json
 from .relevance import check_relevance, clean_interests
 from .domain_taxonomy import generate_domain_taxonomy
+from .research_gaps import analyze_research_gaps
 
 
 router = APIRouter(prefix="/phase2", tags=["phase2"])
@@ -230,4 +231,42 @@ def domain_taxonomy(job_id: str):
         raise HTTPException(
             status_code=502,
             detail=f"Domain taxonomy generation failed: {exc}"
+        ) from exc
+
+
+@router.post("/research-gaps/{job_id}")
+def research_gaps(job_id: str):
+    """Identify candidate research gaps from existing extracted text."""
+    _check(job_id)
+
+    text_path = os.path.join(OUTPUT_DIR, f"{job_id}.txt")
+
+    if not os.path.isfile(text_path):
+        raise HTTPException(
+            status_code=404,
+            detail="Extracted paper text not found. Upload the PDF first."
+        )
+
+    try:
+        with open(text_path, "r", encoding="utf-8") as f:
+            paper_text = f.read()
+
+        result = analyze_research_gaps(paper_text, job_id)
+
+        result_path = os.path.join(
+            OUTPUT_DIR, f"{job_id}_research_gaps.json"
+        )
+
+        with open(result_path, "w", encoding="utf-8") as f:
+            json.dump(result, f, indent=2, ensure_ascii=False)
+
+        return result
+
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    except OSError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Could not read or save research gap results."
         ) from exc
