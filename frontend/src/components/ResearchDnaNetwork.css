@@ -1,42 +1,89 @@
-/* Research DNA network interaction and readability fixes. */
+/* Research DNA network */
 .dna-panel { max-width: 100%; }
-.dna-header { align-items: flex-start; gap: 16px; }
+.dna-header { align-items: flex-start; gap: 16px; flex-wrap: wrap; }
 .dna-zoom { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.dna-layout { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 18px; align-items: start; }
+
 .dna-canvas {
-  width: 100%;
-  overflow: hidden;
-  border: 1px solid var(--line, #d9ddd3);
-  border-radius: 12px;
-  background: #fffefa;
-  touch-action: none;
-  cursor: grab;
-  user-select: none;
+  width: 100%; overflow: hidden; border: 1px solid var(--line, #E6DCCB);
+  border-radius: 12px; background: #fffefa; touch-action: none; cursor: grab; user-select: none;
 }
 .dna-canvas:active { cursor: grabbing; }
 .dna-canvas svg { display: block; width: 100%; height: auto; min-height: 300px; }
 .dna-background { pointer-events: all; }
-.dna-edge { cursor: pointer; outline: none; }
-.dna-edge-hit { stroke: transparent; fill: none; pointer-events: stroke; }
-.dna-edge-line { stroke: #9eaa94; opacity: .9; fill: none; }
-.dna-edge:hover .dna-edge-line,
-.dna-edge:focus .dna-edge-line,
-.dna-edge.selected .dna-edge-line { stroke: #cf3a38; opacity: 1; }
-.dna-node { cursor: pointer; outline: none; }
+
+.dna-edge { cursor: pointer; outline: none; transition: opacity .15s; }
+.dna-edge-line { opacity: .85; fill: none; }
+.dna-edge:hover .dna-edge-line, .dna-edge:focus .dna-edge-line, .dna-edge.selected .dna-edge-line { opacity: 1; }
+.dna-edge:focus-visible .dna-edge-line { filter: drop-shadow(0 0 3px var(--red, #CF3A38)); }
+.dna-edge-label {
+  font: 700 11px "Nunito", system-ui, sans-serif; fill: #263626;
+  paint-order: stroke; stroke: #fffefa; stroke-width: 4px; stroke-linejoin: round;
+}
+
+.dna-node { cursor: pointer; outline: none; transition: opacity .15s; }
 .dna-node circle { fill: #e3ecdd; stroke: #56744a; stroke-width: 1.5; transition: fill .15s, stroke-width .15s; }
-.dna-node text { font: 600 10px system-ui, sans-serif; fill: #263626; }
-.dna-node .dna-percent { font-size: 9px; font-weight: 800; }
-.dna-node:hover circle,
-.dna-node:focus circle,
-.dna-node.selected circle { fill: #f6d3da; stroke: #cf3a38; stroke-width: 3; }
-.dna-detail { margin-top: 18px; border-top: 1px dashed var(--line, #d9ddd3); padding-top: 16px; }
+.dna-node text { font: 600 10.5px system-ui, sans-serif; fill: #263626; }
+.dna-node .dna-percent { font-size: 9.5px; font-weight: 800; }
+.dna-node:hover circle, .dna-node:focus circle, .dna-node.selected circle { fill: #f6d3da; stroke: #cf3a38; stroke-width: 3; }
+.dna-node:focus-visible circle { stroke-dasharray: 5 3; }
+.dna-node.dim, .dna-edge.dim { opacity: .22; }
+
+.dna-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; list-style: none; padding: 0; margin: 10px 0 0; font-size: .85rem; color: var(--muted, #6B7766); }
+.dna-legend li { display: flex; align-items: center; gap: 6px; }
+.dna-swatch { width: 18px; height: 4px; border-radius: 2px; display: inline-block; }
+
+.dna-topics h3 { font-size: 1rem; margin-bottom: 8px; }
+.dna-topics ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.dna-topic-btn {
+  display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; width: 100%; text-align: left;
+  padding: 7px 10px; font: inherit; font-size: .88rem; color: var(--ink, #2B3A2A);
+  background: #fff; border: 1px solid var(--line, #E6DCCB); border-radius: 10px; cursor: pointer;
+}
+.dna-topic-btn:hover, .dna-topic-btn.selected { border-color: var(--red, #CF3A38); background: var(--pink-l, #FCEBEE); }
+.dna-topic-name { font-weight: 700; overflow-wrap: anywhere; }
+.dna-topic-pct { color: var(--muted, #6B7766); font-variant-numeric: tabular-nums; }
+.dna-bar { grid-column: 1 / -1; height: 4px; border-radius: 2px; background: #efe9dc; overflow: hidden; }
+.dna-bar span { display: block; height: 100%; background: var(--moss, #56744A); }
+
+.dna-detail { margin-top: 18px; border-top: 1px dashed var(--line, #E6DCCB); padding-top: 16px; }
 .dna-detail h3 { margin: 0; overflow-wrap: anywhere; }
 .dna-detail-header { align-items: flex-start; gap: 12px; }
-.dna-evidence blockquote { margin: 10px 0; padding: 10px 14px; border-left: 3px solid var(--moss, #56744a); background: #fbf6ee; }
+.dna-connections { margin: 4px 0 8px; padding-left: 20px; }
+.linklike { background: none; border: 0; padding: 0; font: inherit; color: var(--moss-d, #3F5A38); text-decoration: underline; cursor: pointer; text-align: left; }
+.dna-evidence blockquote { margin: 10px 0; padding: 10px 14px; border-left: 3px solid var(--moss, #56744A); background: #fbf6ee; }
 .dna-evidence blockquote p { margin: 0 0 6px; overflow-wrap: anywhere; }
-.dna-evidence small { color: var(--muted, #666); }
+.dna-evidence small { color: var(--muted, #6B7766); }
 .dna-method { margin-top: 14px; }
 .dna-method summary { cursor: pointer; font-weight: 700; }
-@media (max-width: 600px) {
-  .dna-header { flex-direction: column; }
-  .dna-canvas svg { min-height: 280px; }
+
+
+.dna-topics-toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 2px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 1.2rem;
+  text-align: left;
+  cursor: pointer;
 }
+
+.dna-topics-chevron {
+  transition: transform 0.2s ease;
+}
+
+.dna-topics-chevron.open {
+  transform: rotate(180deg);
+}
+
+
+@media (max-width: 800px) { .dna-layout { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .dna-header { flex-direction: column; } .dna-canvas svg { min-height: 280px; } }
+@media (prefers-reduced-motion: reduce) { .dna-node, .dna-edge, .dna-node circle { transition: none; } }

@@ -234,39 +234,63 @@ def domain_taxonomy(job_id: str):
         ) from exc
 
 
+def _gaps_result_path(job_id: str) -> str:
+    return os.path.join(OUTPUT_DIR, f"{job_id}_research_gaps.json")
+
+
+@router.get("/research-gaps/{job_id}")
+def research_gaps_cached(job_id: str):
+    """Return the last saved analysis so the UI can restore it after a reload."""
+    _check(job_id)
+    path = _gaps_result_path(job_id)
+    if not os.path.isfile(path):
+        raise HTTPException(404, "No saved research gap analysis for this paper.")
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError) as exc:
+        raise HTTPException(500, "Saved analysis could not be read.") from exc
+
+
 @router.post("/research-gaps/{job_id}")
 def research_gaps(job_id: str):
-    """Identify candidate research gaps from existing extracted text."""
+    """
+    Identify candidate research gaps.
+
+    Prefers the parsed JSON (page + section provenance, references removed)
+    and falls back to the flat extracted text.
+    """
     _check(job_id)
 
+    json_path = os.path.join(OUTPUT_DIR, f"{job_id}.json")
     text_path = os.path.join(OUTPUT_DIR, f"{job_id}.txt")
 
-    if not os.path.isfile(text_path):
-        raise HTTPException(
-            status_code=404,
-            detail="Extracted paper text not found. Upload the PDF first."
-        )
-
     try:
-        with open(text_path, "r", encoding="utf-8") as f:
-            paper_text = f.read()
+        if os.path.isfile(json_path):
+            source = load_parsed_json(json_path)
+            source["job_id"] = job_id
+        elif os.path.isfile(text_path):
+            with open(text_path, "r", encoding="utf-8") as f:
+                source = f.read()
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail="Extracted paper text not found. Upload the PDF first.",
+            )
 
-        result = analyze_research_gaps(paper_text, job_id)
+        result = analyze_research_gaps(source, job_id)
 
-        result_path = os.path.join(
-            OUTPUT_DIR, f"{job_id}_research_gaps.json"
-        )
-
-        with open(result_path, "w", encoding="utf-8") as f:
+        with open(_gaps_result_path(job_id), "w", encoding="utf-8") as f:
             json.dump(result, f, indent=2, ensure_ascii=False)
 
         return result
 
+    except HTTPException:
+        raise
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-
     except OSError as exc:
         raise HTTPException(
             status_code=500,
-            detail="Could not read or save research gap results."
+            detail="Could not read or save research gap results.",
         ) from exc

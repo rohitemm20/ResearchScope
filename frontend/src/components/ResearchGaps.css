@@ -1,0 +1,68 @@
+.gaps-header { align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.gaps-summary { margin-top: 18px; }
+
+.gap-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 12px; }
+.gap-tab {
+  font: 600 0.9rem "Nunito", system-ui, sans-serif;
+  background: var(--card); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 5px 14px; cursor: pointer;
+}
+.gap-tab span { color: var(--muted); margin-left: 4px; font-weight: 700; }
+.gap-tab:hover:not(:disabled) { border-color: var(--moss); }
+.gap-tab.active { background: var(--moss); border-color: var(--moss); color: #fff; }
+.gap-tab.active span { color: #e3ecdd; }
+.gap-tab:disabled { opacity: .45; cursor: not-allowed; }
+
+.gap-controls { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; }
+.gap-search {
+  flex: 1 1 220px; min-width: 0; padding: 8px 12px; font: inherit;
+  border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink);
+}
+.gap-select, .gap-check { font-size: .9rem; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.gap-select select { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); }
+
+.gap-list { display: grid; gap: 14px; margin-top: 14px; }
+.gap-card {
+  border: 1px solid var(--line); border-left-width: 5px; border-radius: 12px;
+  padding: 14px 16px; background: #fff;
+}
+.gap-card.conf-high { border-left-color: var(--red); }
+.gap-card.conf-medium { border-left-color: var(--moss); }
+.gap-card.conf-low { border-left-color: var(--line); }
+
+.gap-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.badge { font-size: .78rem; font-weight: 700; padding: 2px 10px; border-radius: 999px; }
+.badge-cat { background: #E3ECDD; color: var(--moss-d); }
+.badge-conf.conf-high { background: var(--pink); color: var(--red-d); }
+.badge-conf.conf-medium { background: #E3ECDD; color: var(--moss-d); }
+.badge-conf.conf-low { background: #EFEAE0; color: var(--muted); }
+.badge-scope { background: #FFF3CD; color: #7a5b00; }
+.gap-where { margin-left: auto; font-size: .82rem; color: var(--muted); }
+
+.gap-quote {
+  margin: 10px 0; padding: 10px 14px; background: #fbf6ee;
+  border-left: 3px solid var(--moss); overflow-wrap: anywhere;
+}
+.gap-quote mark, .ctx-main mark { background: var(--pink); color: inherit; padding: 0 2px; border-radius: 3px; }
+.gap-interp { margin: 0; color: var(--muted); font-size: .92rem; max-width: 70ch; }
+.gap-next { margin: 8px 0 0; max-width: 70ch; }
+
+.gap-context { margin-top: 10px; }
+.gap-context summary { cursor: pointer; font-weight: 700; font-size: .9rem; }
+.ctx { margin: 6px 0 0; color: var(--muted); font-size: .9rem; }
+.ctx-main { color: var(--ink); }
+
+.gap-copy { margin-top: 10px; }
+.gap-more { margin-top: 14px; }
+.gap-export { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--line); }
+
+.gap-skeleton { display: grid; gap: 10px; margin-top: 18px; }
+.gap-skeleton span {
+  height: 64px; border-radius: 12px;
+  background: linear-gradient(90deg, #f3ece0 25%, #fbf6ee 50%, #f3ece0 75%);
+  background-size: 200% 100%; animation: gap-shimmer 1.3s infinite;
+}
+@keyframes gap-shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .gap-skeleton span { animation: none; } }
+@media (max-width: 600px) { .gap-where { margin-left: 0; width: 100%; } }

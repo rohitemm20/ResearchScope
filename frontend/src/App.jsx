@@ -2,8 +2,8 @@ import { useRef, useState } from "react";
 import ResearchDnaNetwork from "./components/ResearchDnaNetwork";
 import "./components/ResearchDnaNetwork.css";
 import ResearchGaps from "./components/ResearchGaps";
+import { API_BASE } from "./config";
 
-const API_BASE = "http://127.0.0.1:8000";
 const STEPS = ["Upload", "Read the paper", "Summarise"];
 
 async function api(path, options) {
@@ -969,10 +969,10 @@ export default function App() {
               <details>
 
                 <summary>
-                  Summary of each part (
-                  {p2.chunks.length}
-                  )
+                 Optional section-by-section details ({p2.chunks.length})
                 </summary>
+  
+
 
                 {p2.chunks.map((c) => (
                   <article

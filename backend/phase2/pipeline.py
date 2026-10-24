@@ -83,8 +83,19 @@ def run_pipeline(parsed: dict, job_id: str, out_dir: str,
     tick("chunking")
 
     # 5. summarisation ---------------------------------------------------------
+    # Build ONE paper-level summary directly from the retained source
+    # sentences and their existing MiniLM embeddings. Do not summarise
+    # chunk summaries recursively, which can repeat or distort findings.
+    final = summ.summarize_sentences(
+        kept_sents,
+        kept_vecs,
+        max_sentences=12 if quality == "fast" else 16,
+        max_words=300 if quality == "fast" else 400,
+    )
+
+    # Keep per-chunk summaries only as optional diagnostic details.
+    # These are source-sentence selections, not generative summaries.
     chunks = summ.summarize_chunks(chunks)
-    final = summ.final_summary([c["summary"] for c in chunks])
     tick("summarisation")
 
     # 6. keywords (from the summary; document-level as a second view) ----
@@ -103,7 +114,8 @@ def run_pipeline(parsed: dict, job_id: str, out_dir: str,
             "after_redundancy_filter": len(kept),
             "removed_redundant": len(removed),
             "chunks": len(chunks),
-            "summarizer_model": quality,
+            "summarizer_model": "non_generative_sentence_selection",
+            "summary_mode": quality,
         },
         "summary": final,
         "keywords": kw_summary,
